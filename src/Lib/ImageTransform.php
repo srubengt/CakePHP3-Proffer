@@ -195,11 +195,10 @@ class ImageTransform implements ImageTransformInterface
     /**
      * Rotate current image
      *
-     * @see http://image.intervention.io/api/resize
+     * @see http://image.intervention.io/api/rotate
      *
      * @param \Intervention\Image\Image $image Image instance
-     * @param int $width Desired width in pixels
-     * @param int $height Desired height in pixels
+     * @param int $rotate Angle of rotation
      *
      * @return \Intervention\Image\Image
      */
