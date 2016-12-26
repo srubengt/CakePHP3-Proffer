@@ -83,10 +83,50 @@ class ImageTransform implements ImageTransformInterface
         ];
         $config = array_merge($defaultConfig, $config);
 
+        ////////////////////////////////
+        //Mantener proporciones de la imagen según el parámetro pasado.
+        ////////////////////////////////
+        if (is_null($config['h'])){ //Alto null
+            $size = getimagesize($this->Path->fullPath());
+            $config['h'] = ($config['w'] * $size[1]) / $size[0];
+        }
+
+        if (is_null($config['w'])){ //Ancho null
+            $size = getimagesize($this->Path->fullPath());
+            $config['w'] = ($config['h'] * $size[0]) / $size[1];
+        }
+
+        ////////////////////////////////
         $width = $config['w'];
         $height = $config['h'];
 
         $image = $this->ImageManager->make($this->Path->fullPath());
+
+        ////////////////////////////////
+        //Comprobamos la rotación de la imagen antes de generar el thumbnail
+        ////////////////////////////////
+        $exif = exif_read_data($this->Path->fullPath());
+        if (!empty($exif['Orientation'])) {
+            switch ($exif['Orientation']) {
+                case 3:
+                    $this->rotateImage($image, 180);
+                    break;
+
+                case 6:
+                    $this->rotateImage($image, -90);
+                    $width = $config['h'];
+                    $height = $config['w'];
+                    break;
+
+                case 8:
+                    $this->rotateImage($image, 90);
+                    $width = $config['h'];
+                    $height = $config['w'];
+                    break;
+            }
+        }
+        ////////////////////////////////
+        ////////////////////////////////
 
         if (!empty($config['crop'])) {
             $image = $this->thumbnailCrop($image, $width, $height);
@@ -149,5 +189,21 @@ class ImageTransform implements ImageTransformInterface
     protected function thumbnailResize(Image $image, $width, $height)
     {
         return $image->resize($width, $height);
+    }
+
+
+    /**
+     * Rotate current image
+     *
+     * @see http://image.intervention.io/api/resize
+     *
+     * @param \Intervention\Image\Image $image Image instance
+     * @param int $width Desired width in pixels
+     * @param int $height Desired height in pixels
+     *
+     * @return \Intervention\Image\Image
+     */
+    protected function rotateImage(Image $image, $rotate){
+        return $image->rotate($rotate,0);
     }
 }
