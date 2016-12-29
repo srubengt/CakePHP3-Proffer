@@ -50,6 +50,9 @@ class ImageTransform implements ImageTransformInterface
      */
     public function processThumbnails(array $config)
     {
+        //Comprobar si la imagen original está rotada y corregirlo.
+        $this->imagerotate($this->Path->fullPath());
+
         $thumbnailPaths = [];
         if (!isset($config['thumbnailSizes'])) {
             return $thumbnailPaths;
@@ -163,5 +166,24 @@ class ImageTransform implements ImageTransformInterface
     protected function thumbnailResize(Image $image, $width, $height)
     {
         return $image->resize($width, $height);
+    }
+
+    protected function imagerotate($path){
+        $exif = exif_read_data($path);
+        if(!empty($exif['Orientation'])){
+            $img = imagecreatefromjpeg($path);
+            switch ($exif['Orientation']){
+                case 3:
+                    $rotate = imagerotate($img, 180, 0);
+                    break;
+                case 6:
+                    $rotate = imagerotate($img, -90, 0);
+                    break;
+                case 8:
+                    $rotate = imagerotate($img, 90, 0);
+                    break;
+            }
+            imagejpeg($rotate, $path);
+        }
     }
 }
